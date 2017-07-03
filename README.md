@@ -2,7 +2,7 @@
 
 Training files for action classification using the Charades Activity Challenge dataset.
 
-# Instructions
+# Instructions for training
 
 Clone this repository:
 ```
@@ -24,4 +24,12 @@ $ g++ -std=c++11 create_helper_files.cpp
 $ mkdir helper_files
 $ ./a.out
 $ rm a.out
+```
+Run the training for a 2-layer fully connected network:
+```
+$ python fc.py
+```
+Run the training for a LSTM network:
+```
+$ python lstm.py
 ```
