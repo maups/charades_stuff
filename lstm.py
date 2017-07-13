@@ -8,13 +8,13 @@ import numpy as np
 #############
 
 # Network, input and training parameters
-classes = 157			# number of action classes
+classes = 33			# number of action classes
 batch_size = 256		# size of training/validation batch
 feature_size = 4096		# size of the feature vector
 n_steps = 10			# size of the temporal window
-n_hidden = 256			# size of the hidden layer
-n_epochs = 1000			# duration of training
-epoch_size = 100		# number of batches per epoch
+n_hidden = 2048			# size of the hidden layer
+n_epochs = 3000			# duration of training
+epoch_size = 1			# number of batches per epoch
 
 # Load helper files
 def get_file_list(preffix):
@@ -67,28 +67,31 @@ def get_new_batch(files):
 xs = tf.placeholder(tf.float32, [None, n_steps, feature_size])
 ys = tf.placeholder(tf.int64, [None, 1])
 ys_one_hot = tf.one_hot(ys, classes)
-keep_prob = tf.placeholder(tf.float32)
+input_dropout = tf.placeholder(tf.float32)
+inner_dropout = tf.placeholder(tf.float32)
+xs_drop = tf.nn.dropout(xs, input_dropout)
 
 # 1st LSTM layer
-xs_ = tf.unstack(xs, n_steps, 1)
+xs_ = tf.unstack(xs_drop, n_steps, 1)
 lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-outputs, states = tf.contrib.rnn.static_rnn(lstm_cell, xs_, dtype=tf.float32)
+lstm, _ = tf.contrib.rnn.static_rnn(lstm_cell, xs_, dtype=tf.float32)
+lstm_drop = tf.nn.dropout(lstm[-1], inner_dropout)
 
 # 1st fully connected layer
-W_lstm = tf.Variable(tf.truncated_normal([n_hidden, classes], stddev=0.1))
-b_lstm = tf.Variable(tf.constant(0.1, shape=[classes]))
-pred = tf.matmul(outputs[-1], W_lstm) + b_lstm
+W_fc = tf.Variable(tf.truncated_normal([n_hidden, classes], stddev=0.1))
+b_fc = tf.Variable(tf.constant(0.1, shape=[classes]))
+fc = tf.matmul(lstm_drop, W_fc) + b_fc
 
 # Loss function
-softmax_loss = tf.nn.softmax_cross_entropy_with_logits(labels=ys_one_hot, logits=pred)
+softmax_loss = tf.nn.softmax_cross_entropy_with_logits(labels=ys_one_hot, logits=fc)
 loss = tf.reduce_mean(softmax_loss)
 
 # Optimization
 train_op = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
 # Evaluation
-_, top5 = tf.nn.top_k(pred, 5)
-result = tf.argmax(pred, 1)
+_, top5 = tf.nn.top_k(fc, 5)
+result = tf.argmax(fc, 1)
 ground_truth = tf.reshape(ys, [-1])
 correct_prediction = tf.equal(result, ground_truth)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -105,18 +108,18 @@ with tf.Session() as sess:
 	sess.run(init)
 
 	### In case of interruption, load parameters from the last iteration (ex: 29)
-	#saver.restore(sess, './model_lstm_29')
+	saver.restore(sess, './model_lstm_1200')
 	### And update the loop to account for the previous iterations
 	#for i in range(29,n_epochs):
-	for i in range(n_epochs):
-		print i
+	for i in range(1200,n_epochs):
+		#print i
 
 		# Run 1 epoch
 		vloss = []
 		acc = []
 		for j in range(epoch_size):
 			x_train, y_train = get_new_batch(train_files)
-			ret = sess.run([train_op, loss, accuracy], feed_dict = {xs: x_train, ys: y_train, keep_prob: 0.5})
+			ret = sess.run([train_op, loss, accuracy], feed_dict = {xs: x_train, ys: y_train, inner_dropout: 0.5, input_dropout: 0.2})
 			vloss.append(ret[1])
 			acc.append(ret[2])
 
@@ -128,16 +131,20 @@ with tf.Session() as sess:
 		fp.close()
 
 		# Save network parameters
-		path = 'model_lstm_' + str(i+1)
-		save_path = saver.save(sess, path)
+		if (i+1)%100 == 0:
+			path = 'model_lstm_' + str(i+1)
+			save_path = saver.save(sess, path)
 
 		# Run validation
-		if (i+1)%5 == 0:
+		if (i+1)%1 == 0:
 			cont1 = 0
 			cont5 = 0
+			vloss = []
 			for j in range(epoch_size):
 				x_train, y_train = get_new_batch(val_files)
-				ret = sess.run(top5, feed_dict = {xs: x_train, ys: y_train, keep_prob: 1.0})
+				ret_all = sess.run([top5, loss], feed_dict = {xs: x_train, ys: y_train, inner_dropout: 1.0, input_dropout: 1.0})
+				ret = ret_all[0]
+				vloss.append(ret[1])
 				for k in range(batch_size):
 					c = y_train[k][0]
 					if c == ret[k][0]:
@@ -146,10 +153,10 @@ with tf.Session() as sess:
 					elif c == ret[k][1] or c == ret[k][2] or c == ret[k][3] or c == ret[k][4]:
 						cont5 += 1
 
-			print 'VAL '+str(i+1)+':', (100.*cont1)/(epoch_size*batch_size), (100.*cont5)/(epoch_size*batch_size)
+			print 'VAL '+str(i+1)+':', np.mean(vloss), (100.*cont1)/(epoch_size*batch_size), (100.*cont5)/(epoch_size*batch_size)
 
 			# Log Rank-1 and Rank-5
 			fp = open('log_lstm.txt', 'a')
-			fp.write('VAL ' + str(i+1) + ' ' + str((100.*cont1)/(epoch_size*batch_size)) + ' ' + str((100.*cont5)/(epoch_size*batch_size)) + '\n')
+			fp.write('VAL ' + str(i+1) + ' ' + str(np.mean(vloss)) + ' ' + str((100.*cont1)/(epoch_size*batch_size)) + ' ' + str((100.*cont5)/(epoch_size*batch_size)) + '\n')
 			fp.close()
 

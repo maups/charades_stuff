@@ -7,6 +7,19 @@ using namespace std;
 // Number of frames per action used in training
 #define SAMPLE_SIZE 10
 
+map<int,int> action_to_verb;
+
+void load_action_verb_map() {
+	// open csv file for reading
+	ifstream in;
+	in.open("vu17_charades/Charades_v1_mapping.txt", ifstream::in);
+	string s1, s2, s3;
+	while(in >> s1 >> s2 >> s3) {
+		action_to_verb[stoi(s1.substr(1, s1.size()))] = stoi(s3.substr(1, s3.size()));
+	}
+	in.close();
+}
+
 // Parse Charades' csv files and create lists of samples for each class
 // csv_filename: name of the input file
 // preffix: preffix for the output files ("prefix%d.txt")
@@ -86,7 +99,7 @@ void create_helper_files(string csv_filename, string preffix) {
 
 			// output filename
 			string outfile = preffix;
-			outfile += to_string(action);
+			outfile += to_string(action_to_verb[action]);
 			outfile += ".txt";
 
 			// check if time interval is valid
@@ -119,6 +132,9 @@ void create_helper_files(string csv_filename, string preffix) {
 
 // Main program
 int main(int argc, char **argv) {
+	// Create mapping between actions and verbs
+	load_action_verb_map();
+
 	// Create training helper files
 	create_helper_files("vu17_charades/Charades_vu17_train.csv", "helper_files/train_");
 
