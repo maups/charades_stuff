@@ -10,7 +10,7 @@ import numpy as np
 # Network, input and training parameters
 classes = 33			# number of action classes
 batch_size = 256		# size of training/validation batch
-feature_size = 40960	# size of the feature vector
+feature_size = 40960		# size of the feature vector
 n_hidden1 = 2048		# size of the 1st hidden layer
 n_hidden2 = 256			# size of the 2nd hidden layer
 n_epochs = 3000			# duration of training
@@ -115,8 +115,6 @@ with tf.Session() as sess:
 	### And update the loop to account for the previous iterations
 	for i in range(1000,n_epochs):
 	#for i in range(n_epochs):
-		#print i
-
 		# Run 1 epoch
 		vloss = []
 		acc = []
