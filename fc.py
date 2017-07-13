@@ -111,10 +111,10 @@ with tf.Session() as sess:
 	sess.run(init)
 
 	### In case of interruption, load parameters from the last iteration (ex: 29)
-	saver.restore(sess, './model_fc_1000')
+	#saver.restore(sess, './model_fc_29')
 	### And update the loop to account for the previous iterations
-	for i in range(1000,n_epochs):
-	#for i in range(n_epochs):
+	#for i in range(29,n_epochs):
+	for i in range(n_epochs):
 		# Run 1 epoch
 		vloss = []
 		acc = []
