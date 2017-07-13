@@ -29,6 +29,7 @@ Run the training for a 3-layer fully connected network:
 ```
 $ python fc.py
 ```
+![Results for fc.py](results/res_fc.png?raw=true "fc.py")
 Run the training for a LSTM network:
 ```
 $ python lstm.py
