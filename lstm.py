@@ -112,8 +112,6 @@ with tf.Session() as sess:
 	### And update the loop to account for the previous iterations
 	#for i in range(29,n_epochs):
 	for i in range(1200,n_epochs):
-		#print i
-
 		# Run 1 epoch
 		vloss = []
 		acc = []
