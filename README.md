@@ -34,7 +34,9 @@ Run the training for a LSTM network:
 ```
 $ python lstm.py
 ```
+![Results for lstm.py](results/res_lstm.png?raw=true "lstm.py")
 Run the training for a 2-layer LSTM network:
 ```
 $ python stacked_lstm.py
 ```
+![Results for stacked_lstm.py](results/res_stacked_lstm.png?raw=true "stacked_lstm.py")
