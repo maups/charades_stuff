@@ -25,11 +25,15 @@ $ mkdir helper_files
 $ ./a.out
 $ rm a.out
 ```
-Run the training for a 2-layer fully connected network:
+Run the training for a 3-layer fully connected network:
 ```
 $ python fc.py
 ```
 Run the training for a LSTM network:
 ```
 $ python lstm.py
+```
+Run the training for a 2-layer LSTM network:
+```
+$ python stacked_lstm.py
 ```
