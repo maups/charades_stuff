@@ -2,7 +2,7 @@
 
 Training files for action classification using the Charades Activity Challenge dataset.
 
-# Instructions for training
+# Instructions for training using flow only
 
 Clone this repository:
 ```
