@@ -58,4 +58,4 @@ Run the training for a 2-layer LSTM network:
 ```
 $ python stacked_lstm_rgb.py
 ```
-![Results for stacked_lstm_rgb.py](results/res_stacked_lstm_rgb.png?raw=true "stacked_lstm_rgb.py")
+![Results for stacked_lstm_rgb.py](results/res_stacked_rgb.png?raw=true "stacked_lstm_rgb.py")
