@@ -63,3 +63,14 @@ Run the training for a 2-layer LSTM network:
 $ python stacked_lstm_rgb.py
 ```
 ![Results for stacked_lstm_rgb.py](results/res_stacked_rgb.png?raw=true "stacked_lstm_rgb.py")
+
+# Plot loss/accuracy curves
+
+Install gnuplot:
+```
+$ sudo apt-get install gnuplot
+```
+Run plot script for a specific log file (e.g. log_lstm_rgb.txt)
+```
+$ ./show.sh log_lstm_rgb.txt
+```
