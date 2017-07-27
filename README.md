@@ -54,6 +54,10 @@ Run the training for a 3-layer fully connected network:
 $ python fc_rgb.py
 ```
 ![Results for fc_rgb.py](results/res_fc_rgb.png?raw=true "fc_rgb.py")
+Run the training for a LSTM network:
+```
+$ python lstm_rgb.py
+```
 Run the training for a 2-layer LSTM network:
 ```
 $ python stacked_lstm_rgb.py
