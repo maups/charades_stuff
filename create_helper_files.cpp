@@ -7,18 +7,8 @@ using namespace std;
 // Number of frames per action used in training
 #define SAMPLE_SIZE 10
 
-map<int,int> action_to_verb;
-
-void load_action_verb_map() {
-	// open csv file for reading
-	ifstream in;
-	in.open("vu17_charades/Charades_v1_mapping.txt", ifstream::in);
-	string s1, s2, s3;
-	while(in >> s1 >> s2 >> s3) {
-		action_to_verb[stoi(s1.substr(1, s1.size()))] = stoi(s3.substr(1, s3.size()));
-	}
-	in.close();
-}
+map<string,int> scenario_to_id;
+int id_count=0;
 
 // Parse Charades' csv files and create lists of samples for each class
 // csv_filename: name of the input file
@@ -28,7 +18,7 @@ void create_helper_files(string csv_filename, string preffix) {
 	// check http://vuchallenge.org/README-charades.txt for details
 	vector<int> items;
 	items.push_back(0); // id
-	items.push_back(9); // actions
+	items.push_back(2); // scenario
 
 	// open csv file for reading
 	ifstream in;
@@ -63,84 +53,52 @@ void create_helper_files(string csv_filename, string preffix) {
 			v.push_back(out);
 		}
 
-		// discover the number of available frames for the current video
+		// discover scenario identifier
+		if(scenario_to_id.count(v[1]) == 0)
+			scenario_to_id[v[1]] = id_count++;
+		int id = scenario_to_id[v[1]];
+
+		// discover the name of available frames for the current video
+		vector<string> frames;
 		DIR *dir;
 		struct dirent *ent;
-		string dirname = "Charades_v1_features_flow/";
+		string dirname = "Charades_v1_rgb_scaled/";
 		dirname += v[0]+"/";
 		dir = opendir(dirname.c_str());
-		s="";
-		while((ent = readdir(dir)) != NULL) {
-			string tmp = ent->d_name;
-			if(tmp > s)
-				s = tmp;
-		}
+		while((ent = readdir(dir)) != NULL)
+			if(ent->d_name[0] != '.')
+				frames.push_back(ent->d_name);
 		closedir(dir);
-		int numframes = stoi(s.substr(s.find("-")+1, s.find(".")), nullptr, 10);
 
-		// parse actions
-		s = v[1];
-		while(s.size()) {
-			// get next action
-			string tmp;
-			int pos = s.find(";");
-			if(pos >= 0) {
-				tmp = s.substr(0, pos);
-				s = s.substr(pos+1, s.size());
-			}
-			else {
-				tmp = s;
-				s = "";
-			}
-			stringstream stream(tmp.substr(1, tmp.size()));
-			int action; // class number
-			double start, end; // time interval in seconds
-			stream >> action >> start >> end;
+		// output filename
+		string outfile = preffix;
+		outfile += to_string(id);
+		outfile += ".txt";
 
-			// output filename
-			string outfile = preffix;
-			outfile += to_string(action_to_verb[action]);
-			outfile += ".txt";
-
-			// check if time interval is valid
-			if(end <= start)
-				continue;
-
-			// convert time interval to frame number (24 fps)
-			start = 1.0+start*24.0;
-			end = 1.0+end*24.0;
-			int i, j;
-			for(i=1; i < start; i+=4);
-			if(i >= numframes)
-				continue;
-			for(j=i; j+4 < end && j+4 <= numframes; j+=4);
-			vector<int> vi;
-			for(int k=i; k <= j; k+=4)
-				vi.push_back(k);
-
-			// pick SAMPLE_SIZE frames and save their names
-			ofstream fp;
-			fp.open(outfile, ofstream::out | ofstream::app);
-			for(int k=0; k < SAMPLE_SIZE; k++)
-				fp << "Charades_v1_features_flow/" << v[0] << "/" << v[0] << "-" << setfill('0') << setw(6) << vi[((vi.size()-1)*k) / (SAMPLE_SIZE-1)] << ".txt" << (k==(SAMPLE_SIZE-1)?"":";");
-			fp << endl;
-			fp.close();
-		};
+		// save frame names
+		ofstream fp;
+		fp.open(outfile, ofstream::out | ofstream::app);
+		for(string f : frames)
+			fp << "Charades_v1_rgb_scaled/" << v[0] << "/" << f << endl;
+		fp.close();
 	}
 	in.close();
 }
 
 // Main program
 int main(int argc, char **argv) {
-	// Create mapping between actions and verbs
-	load_action_verb_map();
-
 	// Create training helper files
 	create_helper_files("vu17_charades/Charades_vu17_train.csv", "helper_files/train_");
 
 	// Create validation helper files
 	create_helper_files("vu17_charades/Charades_vu17_validation.csv", "helper_files/val_");
 
+	// Save the name of the classes
+	ofstream fp;
+	fp.open("scenario_id.txt", ofstream::out | ofstream::app);
+	for(auto it = scenario_to_id.begin(); it != scenario_to_id.end(); it++)
+		fp << it->second << " " << it->first << endl;
+	fp.close();
+
 	return 0;
 }
-
